@@ -19,7 +19,10 @@ app.get("/urls", (req, res) => {
 });
 
 app.get("/urls/:id", (req, res) => {
-  let templateVars = { shortURL: req.params.id };
+  let templateVars = {
+    shortURL: req.params.id,
+    longUrl: urlDatabase[req.params.id]
+  };
   res.render("urls_show", templateVars);
 });
 
