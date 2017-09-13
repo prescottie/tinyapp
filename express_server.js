@@ -7,6 +7,7 @@ const bodyParser = require("body-parser");
 app.set("view engine", "ejs");
 
 app.use(bodyParser.urlencoded({extended: true}));
+// app.use(function error(req, res, next){})
 
 function generateRandomString() {
   return Math.floor((1 + Math.random()) * 0x10000000).toString(36);
@@ -22,8 +23,15 @@ app.get("/urls/new", (req, res) => {
 
 app.post("/urls", (req, res) => {
   let shortURL= generateRandomString();
-  urlDatabase[shortURL] = req.body.longURL;
-  res.redirect(301, `/urls/${shortURL}`);         // Respond with 'Ok' (we will replace this)
+  let longURL = req.body.longURL;
+  urlDatabase[shortURL] = longURL;
+  res.redirect(301, `/urls/${shortURL}`);
+});
+
+app.post('/urls/:id/delete', (req, res) => {
+  let id = req.params.id;
+  delete urlDatabase[id];
+  res.redirect(301, '/urls');
 });
 
 app.get("/u/:shortURL", (req, res) => {
@@ -45,14 +53,19 @@ app.get("/urls", (req, res) => {
 
 app.get("/urls/:id", (req, res) => {
   if (urlDatabase[req.params.id] === undefined) {
-    res.redirect(404, '/urls/new');
+    res.redirect('/urls/new');
   }
   let templateVars = {
     shortURL: req.params.id,
     longURL: urlDatabase[req.params.id]
   };
-
   res.render("urls_show", templateVars);
+});
+app.post('/urls/:id', (req, res) => {
+  let id = req.params.id;
+  let newURL = req.body.longURL;
+  urlDatabase[id] = newURL;
+  res.redirect(301, '/urls');
 });
 
 // app.get("/urls.json", (req, res) => {

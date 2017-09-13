@@ -4,9 +4,14 @@
   <body>
     <ul>
       <% for (var key in urls) { %>
-      <li>Url:<%= urls[key] %>, Your TinyUrl: <%= `http://localhost:8080/u/${key}`  %><li>
+      <li>Url:<%= urls[key] %>, Your TinyUrl: <%= `http://localhost:8080/u/${key}`  %>
+        <form method="POST" action="/urls/<%= key%>/delete">
+          <button>Delete</button>
+        </form>
+      </li>
       <% } %>
     </ul>
     <a href='/urls/new'>SHORTEN YOUR URL! </a>
+
   </body>
 </html>

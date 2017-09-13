@@ -2,6 +2,10 @@
 <html>
   <%- include('partials/_header') %>
   <body>
-    <p> URL:<%= longURL %> Your TinyUrl: <a href="/u/<%=shortURL%>"><%= `http://localhost:8080/u/${shortURL}`%>  </a></p>
+    <h2> ShortURL:<a href="<%= shortURL%>"><%= shortURL %></a></p>
+      <form method="POST" action="/urls/<%=shortURL%>">
+        <input id="longURL" type="text" value="<%= longURL%>" name='longURL'>
+        <button type="submit">Update</button>
+      </form>
   </body>
 </html>
