@@ -2,7 +2,6 @@
 <html>
   <%- include('partials/_header') %>
   <body>
-    <p> URL:<%= longURL %> TinyUrl: <%= `http://localhost:8080/${shortURL}` %> </p>
-
+    <p> URL:<%= longURL %> Your TinyUrl: <a href="/u/<%=shortURL%>"><%= `http://localhost:8080/u/${shortURL}`%>  </a></p>
   </body>
 </html>

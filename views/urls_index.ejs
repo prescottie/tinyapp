@@ -4,9 +4,9 @@
   <body>
     <ul>
       <% for (var key in urls) { %>
-      <li>Url:<%= urls[key] %>, TinyUrl: <%= `http://localhost:8080/${key}`  %><li>
+      <li>Url:<%= urls[key] %>, Your TinyUrl: <%= `http://localhost:8080/u/${key}`  %><li>
       <% } %>
     </ul>
-    <a href='#'>SHORTEN YOUR URL! </a>
+    <a href='/urls/new'>SHORTEN YOUR URL! </a>
   </body>
 </html>
