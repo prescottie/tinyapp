@@ -11,6 +11,8 @@ app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser());
 
+
+
 function generateRandomString() {
   return Math.floor((1 + Math.random()) * 0x10000000).toString(36);
 }
@@ -22,10 +24,17 @@ const urlDatabase = {
 app.post("/login", (req, res) => {
   res.cookie('username', `${req.body.username}`);
   res.redirect("/urls");
+});
 
+app.post("/logout", (req, res) => {
+  res.clearCookie('username');
+  res.redirect("/urls");
 });
 
 app.get("/urls/new", (req, res) => {
+  let templateVars = {
+    username: req.cookies["username"]
+  };
   res.render("urls_new");
 });
 
@@ -55,7 +64,8 @@ app.get("/", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  let templateVars = { urls: urlDatabase };
+  let templateVars = { urls: urlDatabase,
+  username: req.cookies["username"] };
   res.render("urls_index", templateVars);
 });
 
@@ -65,7 +75,8 @@ app.get("/urls/:id", (req, res) => {
   }
   let templateVars = {
     shortURL: req.params.id,
-    longURL: urlDatabase[req.params.id]
+    longURL: urlDatabase[req.params.id],
+    username:req.cookies["username"]
   };
   res.render("urls_show", templateVars);
 });
