@@ -2,12 +2,14 @@ const express = require("express");
 const app = express();
 const PORT = process.env.PORT || 8080; // default port 8080
 const bodyParser = require("body-parser");
+const cookieParser = require('cookie-parser');
 
 //setting view engine to EJS
 app.set("view engine", "ejs");
 
-app.use(bodyParser.urlencoded({extended: true}));
 // app.use(function error(req, res, next){})
+app.use(bodyParser.urlencoded({extended: true}));
+app.use(cookieParser());
 
 function generateRandomString() {
   return Math.floor((1 + Math.random()) * 0x10000000).toString(36);
@@ -16,6 +18,12 @@ const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
+
+app.post("/login", (req, res) => {
+  res.cookie('username', `${req.body.username}`);
+  res.redirect("/urls");
+
+});
 
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
