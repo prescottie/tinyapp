@@ -152,9 +152,11 @@ app.post('/urls/:id/delete', (req, res) => {
 
 app.get("/u/:shortURL", (req, res) => {
   if (urlDatabase[req.params.shortURL] === undefined) {
-    res.redirect(404, '/urls/new');
+    res.locals.error = "URL not found, please try again";
+    res.status(404);
+    res.render('register');
   }
-  let longURL = urlDatabase[req.params.shortURL];
+  let longURL = urlDatabase[req.params.shortURL].url;
   res.redirect(301, longURL);
 });
 
