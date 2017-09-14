@@ -1,17 +1,13 @@
-
-<head>
-  <meta charset="utf-8">
-  <title>TinyApp</title>
-  <% if (username === undefined) { %>
-    <form action="/login" method="POST">
-      <label for="username">Login:</label>
-      <input type="text" id="username" name="username" placeholder="username">
-      <button type="submit">Sign In</button>
-    </form>
-  <% } else { %>
-    <p>Logged in as : <%= username%></p>
-    <form action="/logout" method="POST">
-      <button type="submit">Logout</button>
-    </form>
-  <% } %>
-</head>
+<title>TinyApp</title>
+<% if (username === undefined) { %>
+  <form action="/login" method="POST">
+    <label for="username">Login:</label>
+    <input type="text" id="username" name="username" placeholder="username">
+    <button type="submit">Sign In</button>
+  </form>
+<% } else { %>
+  <p>Logged in as : <%= username%></p>
+  <form action="/logout" method="POST">
+    <button type="submit">Logout</button>
+  </form>
+<% } %>
