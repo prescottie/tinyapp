@@ -50,14 +50,15 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser());
 app.use((req, res, next) => {
   res.locals = {
+    urls: urlDatabase,
     shortURL: req.params.id,
     longURL: urlDatabase[req.params.id],
-    username:req.cookies.username,
-    urls: urlDatabase,
-    user_id: req.cookies.user_id
+    user: users[req.cookies.user_id],
+    username: req.cookies.username
   };
   next();
 });
+
 
 app.post("/login", (req, res) => {
   res.cookie('username', `${req.body.username}`);
@@ -104,6 +105,21 @@ app.get("/register", (req, res) => {
   res.render("register");
 });
 
+app.get("/login", (req, res) => {
+  res.render("login");
+});
+
+app.post("/login", (req, res) => {
+  let user = findUserByEmail(req.body.email);
+  if (!user) {
+    res.redirect('/register');
+  }
+  if (request.body.password === user.pasword) {
+    res.cookie("user_id", user.id);
+    res.redirect("/");
+  }
+});
+
 app.post("/urls", (req, res) => {
   let shortURL= generateRandomString();
   let longURL = req.body.longURL;
@@ -134,6 +150,8 @@ app.get("/urls", (req, res) => {
 });
 
 app.get("/urls/:id", (req, res) => {
+  res.locals.shortURL = req.params.id;
+  res.locals.longURL = urlDatabase[req.params.id];
   if (urlDatabase[req.params.id] === undefined) {
     res.redirect('/urls/new');
   }
