@@ -116,7 +116,7 @@ app.post("/login", (req, res) => {
   }
   if (request.body.password === user.pasword) {
     res.cookie("user_id", user.id);
-    res.redirect("/");
+    res.redirect("/");  
   }
 });
 
