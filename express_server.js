@@ -10,7 +10,7 @@ app.set("view engine", "ejs");
 function findUserByEmail(userEmail){
   for (let user in users) {
     if (users[user].email === userEmail) {
-      return users[id];
+      return users[user];
     }
   }
 }
