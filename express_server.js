@@ -3,6 +3,7 @@ const app = express();
 const PORT = process.env.PORT || 8080; // default port 8080
 const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser');
+const bcrypt = require('bcrypt');
 
 //setting view engine to EJS
 app.set("view engine", "ejs");
@@ -39,22 +40,26 @@ const users = {
   "userRandomID": {
     id: "userRandomID",
     email: "user@example.com",
-    password: "1"
-  },
+    password: "$2a$10$tRDjKpJKk9fbTe/OOSNd8eM1yX5le.P3gqg10wWUkm8ErBuV5xjP.",
+    // hashedPassword: bcrypt.hashSync(password, 10)
+},
  "user2RandomID": {
     id: "user2RandomID",
     email: "user2@example.com",
-    password: "2"
+    password: "2a$10$Cbn2ZWuRG9/mtVSoJ2P.fOi1UW.cXAjWxYh3kslECFgRxLY1RHXGe",
+    // hashedPassword: bcrypt.hashSync(password, 10)
   },
   "user3RandomID": {
      id: "user3RandomID",
      email: "user3@example.com",
-     password: "llama"
+     password: "$2a$10$HUQv48aBmyc6S2jdi4.mfea62mbwkW7l1XTG.wwYFUY1zC2NW7.UG",
+    //  hashedPassword: bcrypt.hashSync(password, 10)
    },
    "user4RandomID": {
       id: "user4RandomID",
       email: "user4@example.com",
-      password: "butts123"
+      password: "$2a$10$VoRYwQeWEq3URSGXrfGdTuzcyKyoTfwEyvamKes6eMdHjNknt1.BO",
+      // hashedPassword: bcrypt.hashSync(password, 10)
     }
 };
 
@@ -72,6 +77,7 @@ app.use((req, res, next) => {
 app.post("/register", (req, res) => {
   let userEmail = req.body.email;
   let userPassword = req.body.password;
+  let hashedPassword = bcrypt.hashSync(userPassword, 10);
 
   if (!userEmail) {
     res.locals.error = "Must enter a valid email";
@@ -93,7 +99,7 @@ app.post("/register", (req, res) => {
   users[userId] = {
     id: userId,
     email: userEmail,
-    password: userPassword
+    password: hashedPassword
   };
   res.cookie('user_id', userId);
   res.redirect("/urls");
@@ -122,13 +128,16 @@ app.get("/login", (req, res) => {
 
 app.post("/login", (req, res) => {
   let user = findUserByEmail(req.body.email);
-  if (!user || req.body.password !== user.password) {
+  let inputPass = req.body.password;
+  let comparePass = bcrypt.compareSync(inputPass, user.password);
+  if (!user || !comparePass) {
     res.locals.error ='Email and Password do not match';
     res.status(403);
     res.render('login');
-  }
+  } else {
     res.cookie("user_id", user.id);
     res.redirect("/");
+  }
 });
 
 app.post("/urls", (req, res) => {
