@@ -7,11 +7,13 @@ const cookieParser = require('cookie-parser');
 //setting view engine to EJS
 app.set("view engine", "ejs");
 
-// app.use(function error(req, res, next){})
-app.use(bodyParser.urlencoded({extended: true}));
-app.use(cookieParser());
-
-
+function findUserByEmail(userEmail){
+  for (let user in users) {
+    if (users[user].email === userEmail) {
+      return users[id];
+    }
+  }
+}
 
 function generateRandomString() {
   return Math.floor((1 + Math.random()) * 0x10000000).toString(36);
@@ -43,6 +45,19 @@ const users = {
       password: "butts123"
     }
 };
+// app.use(function error(req, res, next){})
+app.use(bodyParser.urlencoded({extended: true}));
+app.use(cookieParser());
+app.use((req, res, next) => {
+  res.locals = {
+    shortURL: req.params.id,
+    longURL: urlDatabase[req.params.id],
+    username:req.cookies.username,
+    urls: urlDatabase,
+    user_id: req.cookies.user_id
+  };
+  next();
+});
 
 app.post("/login", (req, res) => {
   res.cookie('username', `${req.body.username}`);
@@ -53,11 +68,18 @@ app.post("/register", (req, res) => {
   let userEmail = req.body.email;
   let userPassword = req.body.password;
 
-  if (!userEmail || !userPassword) {
-    res.statusCode(400);
-    res.send("Must leave a form field blank");
+  if (!userEmail) {
+    res.status(400);
+    res.send("Must enter a vaild email");
   }
-
+  if (!userPassword) {
+    res.status(400);
+    res.send("Must enter a password");
+  }
+  if (findUserByEmail(userEmail)) {
+    res.status = 400;
+    res.send("User already exists");
+  }
 
   let userId = generateRandomString();
   users[userId] = {
@@ -66,7 +88,6 @@ app.post("/register", (req, res) => {
     password: userPassword
   };
   res.cookie('user_id', userId);
-
   res.redirect("/urls");
 });
 
@@ -76,9 +97,6 @@ app.post("/logout", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
-  let templateVars = {
-    username: req.cookies.username
-  };
   res.render("urls_new");
 });
 
@@ -112,22 +130,17 @@ app.get("/", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  let templateVars = { urls: urlDatabase,
-  username: req.cookies.username };
-  res.render("urls_index", templateVars);
+  res.render("urls_index");
 });
 
 app.get("/urls/:id", (req, res) => {
   if (urlDatabase[req.params.id] === undefined) {
     res.redirect('/urls/new');
   }
-  let templateVars = {
-    shortURL: req.params.id,
-    longURL: urlDatabase[req.params.id],
-    username:req.cookies.username
-  };
-  res.render("urls_show", templateVars);
+
+  res.render("urls_show");
 });
+
 app.post('/urls/:id', (req, res) => {
   let id = req.params.id;
   let newURL = req.body.longURL;
