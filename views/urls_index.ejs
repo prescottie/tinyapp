@@ -4,8 +4,9 @@
 </head>
 <body>
 <%- include('partials/_header') %>
-<p>  <% for (var key in urls) { %>
-  <%= key%> ~~~~> <%= urls[key] %>
+<p>
+  <% for (var key in urls) { %>
+  <%= key%> ~~~~> <%= urls[key].url %>
   <a href="/urls/<%= key%>">Edit</a>
     <form method="POST" action="/urls/<%= key%>/delete">
       <button>Delete</button>

@@ -7,7 +7,7 @@
 <%- include('partials/_header') %>
 <h2> ShortURL:<a href="<%= shortURL%>"><%= shortURL %></a></h2>
   <form method="POST" action="/urls/<%=shortURL%>">
-    <input id="longURL" type="text" value="<%= longURL%>" name='longURL'>
+    <input id="longURL" type="text" value="<%= longURL.url%>" name='longURL'>
     <button type="submit">Update</button>
   </form>
 </body>
