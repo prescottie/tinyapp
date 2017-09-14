@@ -54,15 +54,8 @@ app.use((req, res, next) => {
     shortURL: req.params.id,
     longURL: urlDatabase[req.params.id],
     user: users[req.cookies.user_id],
-    username: req.cookies.username
   };
   next();
-});
-
-
-app.post("/login", (req, res) => {
-  res.cookie('username', `${req.body.username}`);
-  res.redirect("/urls");
 });
 
 app.post("/register", (req, res) => {
@@ -93,7 +86,7 @@ app.post("/register", (req, res) => {
 });
 
 app.post("/logout", (req, res) => {
-  res.clearCookie('username');
+  res.clearCookie('user_id');
   res.redirect("/urls");
 });
 
@@ -112,12 +105,15 @@ app.get("/login", (req, res) => {
 app.post("/login", (req, res) => {
   let user = findUserByEmail(req.body.email);
   if (!user) {
-    res.redirect('/register');
+    res.status(403);
+    res.send('403 Forbidden: Email does not exists.');
   }
-  if (request.body.password === user.pasword) {
+  if (req.body.password !== user.password) {
+    res.status(403);
+    res.send('403 Forbidden: Password does not match email');
+  }
     res.cookie("user_id", user.id);
-    res.redirect("/");  
-  }
+    res.redirect("/");
 });
 
 app.post("/urls", (req, res) => {
