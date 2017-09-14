@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>TinyApp - Login</title>
+</head>
+<body>
+  <% if (user === undefined) { %>
+    <form action="/login" method="POST">
+      <label for="email">Login:</label>
+      <input type="text" id="email" name="email" placeholder="email">
+      <label for="password">Password:</label>
+      <input type="text" id="password" name="password" placeholder="password">
+      <button type="submit">Sign In</button>
+    </form>
+  <% } else { %>
+    <p>Logged in as : <%= user.email%></p>
+    <form action="/logout" method="POST">
+      <button type="submit">Logout</button>
+    </form>
+  <% } %>
+</body>
+
+</html>
