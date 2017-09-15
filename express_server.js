@@ -77,7 +77,23 @@ app.use((req, res, next) => {
     shortURL: req.params.id,
     longURL: urlDatabase[req.params.id],
     user: req.session.user
+
   };
+  req.user = req.session.user;
+  if(!req.user) {
+    console.log(req.url);
+    // res.body = req.url;
+    if(/^\/u\//.test(req.url) || req.url === '/login' || req.url === '/register') {
+      next();
+      return;
+    }
+    else
+    {
+      res.locals.error = "Must log in first :)";
+      res.render("urls_error");
+      return;
+    }
+  }
   next();
 });
 
@@ -117,7 +133,7 @@ app.post("/logout", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
-  if (!req.session.user){
+  if (!req.user){
     res.locals.error = "Must login to create new short URLs";
     res.render("login");
   }
@@ -172,7 +188,7 @@ app.get("/u/:shortURL", (req, res) => {
   if (urlDatabase[req.params.shortURL] === undefined) {
     res.locals.error = "URL not found, please try again";
     res.status(404);
-    res.render('register');
+    res.render('login');
   }
   let longURL = urlDatabase[req.params.shortURL].url;
   res.redirect(301, longURL);
@@ -208,7 +224,7 @@ app.get("/urls/:id", (req, res) => {
     res.render('urls_new');
   } else if (urlDatabase[req.params.id].userID !== req.session.user.id) {
       res.locals.error = "Cannot view a url that does not belong to you!";
-      res.redirect("/urls");
+      res.render("urls_error");
   } else {
     res.render("urls_show");
   }
