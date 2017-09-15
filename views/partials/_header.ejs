@@ -1,18 +1,15 @@
 <meta  charset="utf-8">
 <title>TinyApp</title>
-
 <% if (user) { %>
   <p>Logged in as : <%= user.email%></p>
   <form action="/logout" method="POST">
     <button type="submit">Logout</button>
   </form>
 
-  <% } else { %>
-
-  <a href="/register">Register</a>
-  <a href="/login">Login</a>
-
-  <% } %>
-  <% if(locals.error){ %>
-    <p><%= error %></p>
-  <% } %>
+<% } else { %>
+<a href="/register">Register</a>
+<a href="/login">Login</a>
+<% } %>
+<% if(locals.error){ %>
+  <p><%= error %></p>
+<% } %>

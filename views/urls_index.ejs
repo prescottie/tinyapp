@@ -6,14 +6,14 @@
 <%- include('partials/_header') %>
 <p>
   <% for (var key in urls) { %>
-  <%= key%> ~~~~> <%= urls[key].url %>
+  <%= key%> ~~~~> <a href="<%=urls[key].url%> "><%= urls[key].url %></a>
   <a href="/urls/<%= key%>">Edit</a>
     <form method="POST" action="/urls/<%= key%>/delete">
       <button>Delete</button>
     </form>
   <% } %>
 </p>
-<a href='/urls/new'>SHORTEN YOUR URL! </a>
+<a href='/urls/new'>Create a new TinyURL </a>
 
 </body>
 </html>

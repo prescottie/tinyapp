@@ -4,6 +4,7 @@ const PORT = process.env.PORT || 8080; // default port 8080
 const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser');
 const bcrypt = require('bcrypt');
+const cookieSession = require('cookie-session');
 
 //setting view engine to EJS
 app.set("view engine", "ejs");
@@ -41,35 +42,41 @@ const users = {
     id: "userRandomID",
     email: "user@example.com",
     password: "$2a$10$tRDjKpJKk9fbTe/OOSNd8eM1yX5le.P3gqg10wWUkm8ErBuV5xjP.",
-    // hashedPassword: bcrypt.hashSync(password, 10)
+    // '1'
 },
  "user2RandomID": {
     id: "user2RandomID",
     email: "user2@example.com",
-    password: "2a$10$Cbn2ZWuRG9/mtVSoJ2P.fOi1UW.cXAjWxYh3kslECFgRxLY1RHXGe",
-    // hashedPassword: bcrypt.hashSync(password, 10)
+    password: "$2a$10$Z6ZeWvXxhyrxEzlP8iXoTul.mNdUDgNbSKct4yppJoKfAB7o2kMzK",
+    // 2
   },
   "user3RandomID": {
      id: "user3RandomID",
      email: "user3@example.com",
      password: "$2a$10$HUQv48aBmyc6S2jdi4.mfea62mbwkW7l1XTG.wwYFUY1zC2NW7.UG",
-    //  hashedPassword: bcrypt.hashSync(password, 10)
+    //  llama
    },
    "user4RandomID": {
       id: "user4RandomID",
       email: "user4@example.com",
       password: "$2a$10$VoRYwQeWEq3URSGXrfGdTuzcyKyoTfwEyvamKes6eMdHjNknt1.BO",
-      // hashedPassword: bcrypt.hashSync(password, 10)
+      // butts123
     }
 };
-
+// Middleware for parsing form data in the body of the request
 app.use(bodyParser.urlencoded({extended: true}));
-app.use(cookieParser());
+
+// Middleware for setting cookie session tokens
+app.use(cookieSession({
+  keys: ["wingding", "llama"]
+}));
+
+// SET LOCALS
 app.use((req, res, next) => {
   res.locals = {
     shortURL: req.params.id,
     longURL: urlDatabase[req.params.id],
-    user: users[req.cookies.user_id],
+    user: req.session.user
   };
   next();
 });
@@ -78,7 +85,6 @@ app.post("/register", (req, res) => {
   let userEmail = req.body.email;
   let userPassword = req.body.password;
   let hashedPassword = bcrypt.hashSync(userPassword, 10);
-
   if (!userEmail) {
     res.locals.error = "Must enter a valid email";
     res.status(400);
@@ -101,17 +107,17 @@ app.post("/register", (req, res) => {
     email: userEmail,
     password: hashedPassword
   };
-  res.cookie('user_id', userId);
-  res.redirect("/urls");
+  req.session.user = users[userId];
+  res.redirect("/");
 });
 
 app.post("/logout", (req, res) => {
-  res.clearCookie('user_id');
+  req.session = null;
   res.redirect("/urls");
 });
 
 app.get("/urls/new", (req, res) => {
-  if (!req.cookies.user_id){
+  if (!req.session.user){
     res.locals.error = "Must login to create new short URLs";
     res.render("login");
   }
@@ -135,7 +141,7 @@ app.post("/login", (req, res) => {
     res.status(403);
     res.render('login');
   } else {
-    res.cookie("user_id", user.id);
+    req.session.user = user;
     res.redirect("/");
   }
 });
@@ -143,13 +149,16 @@ app.post("/login", (req, res) => {
 app.post("/urls", (req, res) => {
   let shortURL= generateRandomString();
   let longURL = req.body.longURL;
-  urlDatabase[shortURL] = longURL;
+  urlDatabase[shortURL] = {
+    userID: req.session.user.id,
+    url: longURL
+  };
   res.redirect(301, `/urls/${shortURL}`);
 });
 
 app.post('/urls/:id/delete', (req, res) => {
   let id = req.params.id;
-  if (urlDatabase[id].userID !== req.cookies.user_id) {
+  if (urlDatabase[id].userID !== req.session.user) {
     res.locals.error = "Cannot delete a url that does not belong to you!";
     res.status(401);
     res.render('urls_index');
@@ -170,15 +179,18 @@ app.get("/u/:shortURL", (req, res) => {
 });
 
 app.get("/", (req, res) => {
-  res.end("Hello!");
+  if (!req.session.user){
+    res.redirect('/login');
+  }
+  res.redirect("/urls");
 });
 
 app.get("/urls", (req, res) => {
-  if (!req.cookies.user_id){
+  if (!req.session.user){
     res.locals.error = "Must login to view URLs";
     res.render("login");
   } else {
-  let urlsFiltered = urlsByUser(req.cookies.user_id);
+  let urlsFiltered = urlsByUser(req.session.user.id);
   res.render("urls_index", {urls: urlsFiltered});
   }
 });
@@ -186,21 +198,31 @@ app.get("/urls", (req, res) => {
 app.get("/urls/:id", (req, res) => {
   res.locals.shortURL = req.params.id;
   res.locals.longURL = urlDatabase[req.params.id];
-  if (urlDatabase[req.params.id] === undefined) {
-    res.redirect('/urls/new');
+  if (!req.session.user){
+    res.locals.error = "Must login to view TinyURL's";
+    res.render('login');
   }
-  res.render("urls_show");
+  if (urlDatabase[req.params.id] === undefined) {
+    res.locals.error = "This TinyURL does not exist, try creating it";
+    res.status(401);
+    res.render('urls_new');
+  } else if (urlDatabase[req.params.id].userID !== req.session.user.id) {
+      res.locals.error = "Cannot view a url that does not belong to you!";
+      res.redirect("/urls");
+  } else {
+    res.render("urls_show");
+  }
 });
 
 app.post('/urls/:id', (req, res) => {
   let id = req.params.id;
-  if (urlDatabase[id].userID !== req.cookies.user_id) {
+  if (urlDatabase[id].userID !== req.session.user.id) {
     res.locals.error = "Cannot delete a url that does not belong to you!";
     res.status(401);
     res.render('urls_index');
   } else {
   let newURL = req.body.longURL;
-  urlDatabase[id] = newURL;
+  urlDatabase[id].url = newURL;
   res.redirect(301, '/urls');
   }
 });
