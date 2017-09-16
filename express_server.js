@@ -76,25 +76,34 @@ app.use((req, res, next) => {
   res.locals = {
     shortURL: req.params.id,
     longURL: urlDatabase[req.params.id],
-    user: req.session.user
-
+    user: req.session.user,
   };
   req.user = req.session.user;
+//tests if user is logged in with exclusion of login register
+//and url that pointing redirecting ot the long url
   if(!req.user) {
-    console.log(req.url);
-    // res.body = req.url;
     if(/^\/u\//.test(req.url) || req.url === '/login' || req.url === '/register') {
       next();
       return;
-    }
-    else
-    {
+    } else {
       res.locals.error = "Must log in first :)";
       res.render("urls_error");
       return;
     }
   }
   next();
+});
+
+app.get("/", (req, res) => {
+  res.redirect("/urls");
+});
+
+app.get("/register", (req, res) => {
+  if (req.session.user) {
+    res.redirect('/urls');
+  } else {
+    res.render("register");
+  }
 });
 
 app.post("/register", (req, res) => {
@@ -129,55 +138,48 @@ app.post("/register", (req, res) => {
 
 app.post("/logout", (req, res) => {
   req.session = null;
-  res.redirect("/urls");
+  res.redirect("/login");
 });
 
 app.get("/urls/new", (req, res) => {
-  if (!req.user){
-    res.locals.error = "Must login to create new short URLs";
-    res.render("login");
-  }
   res.render("urls_new");
 });
 
-app.get("/register", (req, res) => {
-  res.render("register");
-});
-
 app.get("/login", (req, res) => {
-  res.render("login");
+  if (req.session.user) {
+    res.redirect('/urls');
+  } else {
+    res.render("login");
+  }
 });
 
 app.post("/login", (req, res) => {
-  let user = findUserByEmail(req.body.email);
-  let inputPass = req.body.password;
-  let comparePass = bcrypt.compareSync(inputPass, user.password);
-  if (!user || !comparePass) {
+  if (findUserByEmail(req.body.email) === undefined ) {
     res.locals.error ='Email and Password do not match';
     res.status(403);
     res.render('login');
   } else {
-    req.session.user = user;
-    res.redirect("/");
+    let user = findUserByEmail(req.body.email);
+    console.log(user);
+    let inputPass = req.body.password;
+    let comparePass = bcrypt.compareSync(inputPass, user.password);
+    if (!user || !comparePass ) {
+      res.locals.error ='Email and Password do not match';
+      res.status(403);
+      res.render('login');
+    } else {
+      req.session.user = user;
+      res.redirect("/");
+    }
   }
-});
-
-app.post("/urls", (req, res) => {
-  let shortURL= generateRandomString();
-  let longURL = req.body.longURL;
-  urlDatabase[shortURL] = {
-    userID: req.session.user.id,
-    url: longURL
-  };
-  res.redirect(301, `/urls/${shortURL}`);
 });
 
 app.post('/urls/:id/delete', (req, res) => {
   let id = req.params.id;
-  if (urlDatabase[id].userID !== req.session.user) {
+  if (urlDatabase[id].userID !== req.session.user.id) {
     res.locals.error = "Cannot delete a url that does not belong to you!";
     res.status(401);
-    res.render('urls_index');
+    res.render('urls_error');
   } else {
   delete urlDatabase[id];
   res.redirect(301, '/urls');
@@ -194,23 +196,22 @@ app.get("/u/:shortURL", (req, res) => {
   res.redirect(301, longURL);
 });
 
-app.get("/", (req, res) => {
-  if (!req.session.user){
-    res.redirect('/login');
-  }
-  res.redirect("/urls");
-});
-
 app.get("/urls", (req, res) => {
-  if (!req.session.user){
-    res.locals.error = "Must login to view URLs";
-    res.render("login");
-  } else {
   let urlsFiltered = urlsByUser(req.session.user.id);
   res.render("urls_index", {urls: urlsFiltered});
-  }
 });
 
+app.post("/urls", (req, res) => {
+  let shortURL= generateRandomString();
+  let longURL = req.body.longURL;
+  urlDatabase[shortURL] = {
+    userID: req.session.user.id,
+    url: longURL
+  };
+  res.redirect(301, `/urls/${shortURL}`);
+});
+
+//Shows 
 app.get("/urls/:id", (req, res) => {
   res.locals.shortURL = req.params.id;
   res.locals.longURL = urlDatabase[req.params.id];
@@ -230,12 +231,13 @@ app.get("/urls/:id", (req, res) => {
   }
 });
 
+//Edits the external URL that the short URL redirects to
 app.post('/urls/:id', (req, res) => {
   let id = req.params.id;
   if (urlDatabase[id].userID !== req.session.user.id) {
-    res.locals.error = "Cannot delete a url that does not belong to you!";
+    res.locals.error = "Cannot change a url that does not belong to you!";
     res.status(401);
-    res.render('urls_index');
+    res.render('urls_error');
   } else {
   let newURL = req.body.longURL;
   urlDatabase[id].url = newURL;
@@ -243,13 +245,6 @@ app.post('/urls/:id', (req, res) => {
   }
 });
 
-// app.get("/urls.json", (req, res) => {
-//   res.json(urlDatabase);
-// });
-
-// app.get("/hello", (req, res) => {
-//   res.end("<html><body>Hello <b>World</b></body></html>\n");
-// });
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
