@@ -211,7 +211,7 @@ app.post("/urls", (req, res) => {
   res.redirect(301, `/urls/${shortURL}`);
 });
 
-//Shows 
+//Shows urls_show page
 app.get("/urls/:id", (req, res) => {
   res.locals.shortURL = req.params.id;
   res.locals.longURL = urlDatabase[req.params.id];
