@@ -9,6 +9,7 @@ const cookieSession = require('cookie-session');
 //setting view engine to EJS
 app.set("view engine", "ejs");
 
+//find user by the email provided and return the user object
 function findUserByEmail(userEmail){
   for (let user in users) {
     if (users[user].email === userEmail) {
@@ -17,6 +18,7 @@ function findUserByEmail(userEmail){
   }
 }
 
+// find urls that belong to a user and return those urls
 function urlsByUser(id){
   let filtered = {};
   for (let shortURL in urlDatabase) {
@@ -26,10 +28,11 @@ function urlsByUser(id){
   }
   return filtered;
 }
-
+//generate string of 6 alphanumeric characters
 function generateRandomString() {
   return Math.floor((1 + Math.random()) * 0x10000000).toString(36);
 }
+
 const urlDatabase = {
   "b2xVn2": { userID: "userRandomID",
             url:"http://www.lighthouselabs.ca"},
@@ -109,6 +112,7 @@ app.get("/register", (req, res) => {
 app.post("/register", (req, res) => {
   let userEmail = req.body.email;
   let userPassword = req.body.password;
+  //hashes password to store password securely
   let hashedPassword = bcrypt.hashSync(userPassword, 10);
   if (!userEmail) {
     res.locals.error = "Must enter a valid email";
@@ -125,7 +129,7 @@ app.post("/register", (req, res) => {
     res.status(400);
     res.render('register');
   }
-
+  //constructs new user into `users` database
   let userId = generateRandomString();
   users[userId] = {
     id: userId,
@@ -153,16 +157,20 @@ app.get("/login", (req, res) => {
   }
 });
 
+
 app.post("/login", (req, res) => {
+  //if cant find user by their email in the database
+  //return undefined and re-render with errror message
   if (findUserByEmail(req.body.email) === undefined ) {
     res.locals.error ='Email and Password do not match';
     res.status(403);
     res.render('login');
   } else {
     let user = findUserByEmail(req.body.email);
-    console.log(user);
     let inputPass = req.body.password;
     let comparePass = bcrypt.compareSync(inputPass, user.password);
+    //if user does not exist and hashed password is not validated
+    //give error and re-render login page
     if (!user || !comparePass ) {
       res.locals.error ='Email and Password do not match';
       res.status(403);
@@ -174,8 +182,10 @@ app.post("/login", (req, res) => {
   }
 });
 
+//POST from delete button on urls_index
 app.post('/urls/:id/delete', (req, res) => {
   let id = req.params.id;
+  //if url does not belong to user, do not allow deletion
   if (urlDatabase[id].userID !== req.session.user.id) {
     res.locals.error = "Cannot delete a url that does not belong to you!";
     res.status(401);
@@ -186,6 +196,7 @@ app.post('/urls/:id/delete', (req, res) => {
   }
 });
 
+//redirect to external URL that the TinyURL refers too
 app.get("/u/:shortURL", (req, res) => {
   if (urlDatabase[req.params.shortURL] === undefined) {
     res.locals.error = "URL not found, please try again";
@@ -201,6 +212,7 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", {urls: urlsFiltered});
 });
 
+//Edits current long URL to a new Long URL and saves it in database
 app.post("/urls", (req, res) => {
   let shortURL= generateRandomString();
   let longURL = req.body.longURL;
@@ -215,10 +227,7 @@ app.post("/urls", (req, res) => {
 app.get("/urls/:id", (req, res) => {
   res.locals.shortURL = req.params.id;
   res.locals.longURL = urlDatabase[req.params.id];
-  if (!req.session.user){
-    res.locals.error = "Must login to view TinyURL's";
-    res.render('login');
-  }
+  //if :id does not exists, send error and re-render urls_new to create it
   if (urlDatabase[req.params.id] === undefined) {
     res.locals.error = "This TinyURL does not exist, try creating it";
     res.status(401);
