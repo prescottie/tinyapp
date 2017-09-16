@@ -33,39 +33,6 @@ function generateRandomString() {
   return Math.floor((1 + Math.random()) * 0x10000000).toString(36);
 }
 
-const urlDatabase = {
-  "b2xVn2": { userID: "userRandomID",
-            url:"http://www.lighthouselabs.ca"},
-  "9sm5xK": { userID: "user2RandomID",
-            url:"http://www.google.com"}
-};
-
-const users = {
-  "userRandomID": {
-    id: "userRandomID",
-    email: "user@example.com",
-    password: "$2a$10$tRDjKpJKk9fbTe/OOSNd8eM1yX5le.P3gqg10wWUkm8ErBuV5xjP.",
-    // '1'
-},
- "user2RandomID": {
-    id: "user2RandomID",
-    email: "user2@example.com",
-    password: "$2a$10$Z6ZeWvXxhyrxEzlP8iXoTul.mNdUDgNbSKct4yppJoKfAB7o2kMzK",
-    // 2
-  },
-  "user3RandomID": {
-     id: "user3RandomID",
-     email: "user3@example.com",
-     password: "$2a$10$HUQv48aBmyc6S2jdi4.mfea62mbwkW7l1XTG.wwYFUY1zC2NW7.UG",
-    //  llama
-   },
-   "user4RandomID": {
-      id: "user4RandomID",
-      email: "user4@example.com",
-      password: "$2a$10$VoRYwQeWEq3URSGXrfGdTuzcyKyoTfwEyvamKes6eMdHjNknt1.BO",
-      // butts123
-    }
-};
 // Middleware for parsing form data in the body of the request
 app.use(bodyParser.urlencoded({extended: true}));
 
