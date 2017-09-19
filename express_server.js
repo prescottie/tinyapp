@@ -2,15 +2,15 @@ const express = require("express");
 const app = express();
 const PORT = process.env.PORT || 8080; // default port 8080
 const bodyParser = require("body-parser");
-const cookieParser = require('cookie-parser');
-const bcrypt = require('bcrypt');
-const cookieSession = require('cookie-session');
+const cookieParser = require("cookie-parser");
+const bcrypt = require("bcrypt");
+const cookieSession = require("cookie-session");
 
 //setting view engine to EJS
 app.set("view engine", "ejs");
 
 //find user by the email provided and return the user object
-function findUserByEmail(userEmail){
+function findUserByEmail(userEmail) {
   for (let user in users) {
     if (users[user].email === userEmail) {
       return users[user];
@@ -19,10 +19,10 @@ function findUserByEmail(userEmail){
 }
 
 // find urls that belong to a user and return those urls
-function urlsByUser(id){
+function urlsByUser(id) {
   let filtered = {};
   for (let shortURL in urlDatabase) {
-    if (id === urlDatabase[shortURL].userID){
+    if (id === urlDatabase[shortURL].userID) {
       filtered[shortURL] = urlDatabase[shortURL];
     }
   }
@@ -33,26 +33,35 @@ function generateRandomString() {
   return Math.floor((1 + Math.random()) * 0x10000000).toString(36);
 }
 
+const urlDatabase = {};
+
+const users = {};
 // Middleware for parsing form data in the body of the request
-app.use(bodyParser.urlencoded({extended: true}));
+app.use(bodyParser.urlencoded({ extended: true }));
 
 // Middleware for setting cookie session tokens
-app.use(cookieSession({
-  keys: ["wingding", "llama"]
-}));
+app.use(
+  cookieSession({
+    keys: ["wingding", "llama"]
+  })
+);
 
 // SET LOCALS
 app.use((req, res, next) => {
   res.locals = {
     shortURL: req.params.id,
     longURL: urlDatabase[req.params.id],
-    user: req.session.user,
+    user: req.session.user
   };
   req.user = req.session.user;
-//tests if user is logged in with exclusion of login register
-//and url that pointing redirecting ot the long url
-  if(!req.user) {
-    if(/^\/u\//.test(req.url) || req.url === '/login' || req.url === '/register') {
+  //tests if user is logged in with exclusion of login register
+  //and url that pointing redirecting ot the long url
+  if (!req.user) {
+    if (
+      /^\/u\//.test(req.url) ||
+      req.url === "/login" ||
+      req.url === "/register"
+    ) {
       next();
       return;
     } else {
@@ -70,7 +79,7 @@ app.get("/", (req, res) => {
 
 app.get("/register", (req, res) => {
   if (req.session.user) {
-    res.redirect('/urls');
+    res.redirect("/urls");
   } else {
     res.render("register");
   }
@@ -84,17 +93,17 @@ app.post("/register", (req, res) => {
   if (!userEmail) {
     res.locals.error = "Must enter a valid email";
     res.status(400);
-    res.render('register');
+    res.render("register");
   }
   if (!userPassword) {
     res.locals.error = "Must enter a password";
     res.status(400);
-    res.render('register');
+    res.render("register");
   }
   if (findUserByEmail(userEmail)) {
     res.locals.error = "User by that email already exists";
     res.status(400);
-    res.render('register');
+    res.render("register");
   }
   //constructs new user into `users` database
   let userId = generateRandomString();
@@ -118,30 +127,29 @@ app.get("/urls/new", (req, res) => {
 
 app.get("/login", (req, res) => {
   if (req.session.user) {
-    res.redirect('/urls');
+    res.redirect("/urls");
   } else {
     res.render("login");
   }
 });
 
-
 app.post("/login", (req, res) => {
   //if cant find user by their email in the database
   //return undefined and re-render with errror message
-  if (findUserByEmail(req.body.email) === undefined ) {
-    res.locals.error ='Email and Password do not match';
+  if (findUserByEmail(req.body.email) === undefined) {
+    res.locals.error = "Email and Password do not match";
     res.status(403);
-    res.render('login');
+    res.render("login");
   } else {
     let user = findUserByEmail(req.body.email);
     let inputPass = req.body.password;
     let comparePass = bcrypt.compareSync(inputPass, user.password);
     //if user does not exist and hashed password is not validated
     //give error and re-render login page
-    if (!user || !comparePass ) {
-      res.locals.error ='Email and Password do not match';
+    if (!user || !comparePass) {
+      res.locals.error = "Email and Password do not match";
       res.status(403);
-      res.render('login');
+      res.render("login");
     } else {
       req.session.user = user;
       res.redirect("/");
@@ -150,16 +158,16 @@ app.post("/login", (req, res) => {
 });
 
 //POST from delete button on urls_index
-app.post('/urls/:id/delete', (req, res) => {
+app.post("/urls/:id/delete", (req, res) => {
   let id = req.params.id;
   //if url does not belong to user, do not allow deletion
   if (urlDatabase[id].userID !== req.session.user.id) {
     res.locals.error = "Cannot delete a url that does not belong to you!";
     res.status(401);
-    res.render('urls_error');
+    res.render("urls_error");
   } else {
-  delete urlDatabase[id];
-  res.redirect(301, '/urls');
+    delete urlDatabase[id];
+    res.redirect(301, "/urls");
   }
 });
 
@@ -168,7 +176,7 @@ app.get("/u/:shortURL", (req, res) => {
   if (urlDatabase[req.params.shortURL] === undefined) {
     res.locals.error = "URL not found, please try again";
     res.status(404);
-    res.render('login');
+    res.render("login");
   }
   let longURL = urlDatabase[req.params.shortURL].url;
   res.redirect(301, longURL);
@@ -176,12 +184,12 @@ app.get("/u/:shortURL", (req, res) => {
 
 app.get("/urls", (req, res) => {
   let urlsFiltered = urlsByUser(req.session.user.id);
-  res.render("urls_index", {urls: urlsFiltered});
+  res.render("urls_index", { urls: urlsFiltered });
 });
 
 //Edits current long URL to a new Long URL and saves it in database
 app.post("/urls", (req, res) => {
-  let shortURL= generateRandomString();
+  let shortURL = generateRandomString();
   let longURL = req.body.longURL;
   urlDatabase[shortURL] = {
     userID: req.session.user.id,
@@ -194,33 +202,32 @@ app.post("/urls", (req, res) => {
 app.get("/urls/:id", (req, res) => {
   res.locals.shortURL = req.params.id;
   res.locals.longURL = urlDatabase[req.params.id];
-  //if :id does not exists, send error and re-render urls_new to create it
+  //if :id does not exists, send error and re-render urls_new to create it.
   if (urlDatabase[req.params.id] === undefined) {
     res.locals.error = "This TinyURL does not exist, try creating it";
     res.status(401);
-    res.render('urls_new');
+    res.render("urls_new");
   } else if (urlDatabase[req.params.id].userID !== req.session.user.id) {
-      res.locals.error = "Cannot view a url that does not belong to you!";
-      res.render("urls_error");
+    res.locals.error = "Cannot view a url that does not belong to you!";
+    res.render("urls_error");
   } else {
     res.render("urls_show");
   }
 });
 
 //Edits the external URL that the short URL redirects to
-app.post('/urls/:id', (req, res) => {
+app.post("/urls/:id", (req, res) => {
   let id = req.params.id;
   if (urlDatabase[id].userID !== req.session.user.id) {
     res.locals.error = "Cannot change a url that does not belong to you!";
     res.status(401);
-    res.render('urls_error');
+    res.render("urls_error");
   } else {
-  let newURL = req.body.longURL;
-  urlDatabase[id].url = newURL;
-  res.redirect(301, '/urls');
+    let newURL = req.body.longURL;
+    urlDatabase[id].url = newURL;
+    res.redirect(301, "/urls");
   }
 });
-
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
